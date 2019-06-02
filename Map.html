@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Ottawa Permits</title>
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.js"></script>
+    <link
+      href="https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.css"
+      rel="stylesheet"
+    />
+    <script src='https://api.mapbox.com/mapbox.js/plugins/turf/v3.0.11/turf.min.js'></script>
+    <!-- <script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.2.0/mapbox-gl-geocoder.min.js'></script> -->
+    <!-- <link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.2.0/mapbox-gl-geocoder.css' type='text/css' /> -->
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      #map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script>
+      mapboxgl.accessToken =
+        "pk.eyJ1IjoiYXBhZ290dG8iLCJhIjoiY2pwNzh0NjYxMW1ndDNxbnJ4Zmd0cnZ4cCJ9.-eIh1Yhfl7R1Q2rtX6lqAQ";
+      const map = new mapboxgl.Map({
+        container: "map",
+        style: "mapbox://styles/apagotto/cjw8e4f7y5ki61co3ntohays3",
+        center: [-75.693362, 45.445191],
+        zoom: 11,
+        minZoom: 10
+      });
+
+      map.on("load", function() {
+        map.addSource("Ottawa", {
+          type: "vector",
+          url: "mapbox://apagotto.ottawaPermits"
+        });
+        map.addLayer({
+          id: "Ottawa",
+          type: "circle",
+          source: "Ottawa",
+          layout: {
+            visibility: "visible"
+          },
+          paint: {
+            "circle-radius": ["interpolate", ["linear"], ["zoom"], 2, 3],
+            "circle-color": "rgb(30, 144, 255)"
+          },
+          "source-layer": "ottawaPermits"
+        });
+      });
+      let popup = new mapboxgl.Popup();
+
+      map.on("mousemove", function(e) {
+        var features = map.queryRenderedFeatures(e.point, {
+          layers: ["Ottawa"]
+        });
+        if (!features.length) {
+          popup.remove();
+          return;
+        }
+        var feature = features[0];
+
+        popup
+          .setLngLat(feature.geometry.coordinates)
+          .setHTML(
+             feature.properties.FULLADDR +
+              "<br> " +
+              feature.properties['CONTRACTOR '] +
+              "<br>" +
+              feature.properties["ISSUED DATE"]
+          )
+          .addTo(map);
+
+        map.getCanvas().style.cursor = features.length ? "pointer" : "";
+      })
+      map.on('click',function(e){
+        let Addresses = map.queryRenderedFeatures(e.point, {layers:['Ottawa']});
+        if (!Addresses.length){
+          return;
+        }
+        let clickedAddress = Addresses[0];
+        let buffer = turf.buffer(clickedAddress,2)
+
+        map.addLayer({
+          id:'buffer',
+          type:'fill',
+          source:{
+            'type':'geojson',
+            'data':buffer
+          },
+          paint:{
+            'fill-opacity':0.3,
+            'fill-color': '#8e1eff',
+            'fill-outline-color':'#fffe1e'
+          }
+        })
+      })
+      ;
+      // map.addControl(new MapboxGeocoder({
+      // accessToken: mapboxgl.accessToken,
+      // mapboxgl: mapboxgl
+      // }));
+
+      // map.on('load',function(){
+      //             var popup = new mapboxgl.Popup({
+      //                 closeButton: false,
+      //                 closeOnClick : false
+      //             });
+      //               function showPopup(e) {
+      //                 // Updates the cursor to a hand (interactivity)
+      //                 map.getCanvas().style.cursor = 'pointer';
+
+      //                 // Show the popup at the coordinates with some data
+      //                 popup.setLngLat(e.features[0].geometry.coordinates)
+      //                 .setHTML(checkEmpty("<p class = 'Popup'>" + e.features[0].properties.StreetNumber + ' '+ e.features[0].properties.StreetName + '</p>'))
+      //                 .addTo(map);
+      //             }
+      //               function hidePopup() {
+      //                 map.getCanvas().style.cursor = '';
+      //                 popup.remove();
+      //             }
+
+      //             function checkEmpty(info) {
+      //                 return (info) ? info : "No data";
+      //             }
+
+      //             map.on('mouseenter', 'ottawa-flood', showPopup);
+      //             map.on('mouseleave', 'ottawa-flood', hidePopup);
+      //             });
+    </script>
+  </body>
+</html>
