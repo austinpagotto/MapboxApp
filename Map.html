@@ -12,7 +12,7 @@
       href="https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.css"
       rel="stylesheet"
     />
-    <script src='https://api.mapbox.com/mapbox.js/plugins/turf/v3.0.11/turf.min.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@5/turf.min.js"></script>
     <!-- <script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.2.0/mapbox-gl-geocoder.min.js'></script> -->
     <!-- <link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.2.0/mapbox-gl-geocoder.css' type='text/css' /> -->
     <style>
@@ -42,22 +42,33 @@
       });
 
       map.on("load", function() {
-        map.addSource("Ottawa", {
-          type: "vector",
-          url: "mapbox://apagotto.ottawaPermits"
-        });
+        map.addSource('Ottawa',{
+          type:'geojson',
+          data:{
+            features:"https://raw.githubusercontent.com/austinpagotto/MapboxApp/master/ottPermits.geojson",
+            type:'FeatureCollection'
+          }
+        })
         map.addLayer({
-          id: "Ottawa",
-          type: "circle",
-          source: "Ottawa",
-          layout: {
-            visibility: "visible"
+          'id' :'Ottawa',
+          'type': "circle",
+          'source':
+            'Ottawa',
+          'layout': {
+            'visibility': "visible"
           },
-          paint: {
+          'paint': {
             "circle-radius": ["interpolate", ["linear"], ["zoom"], 2, 3],
             "circle-color": "rgb(30, 144, 255)"
           },
-          "source-layer": "ottawaPermits"
+        });
+
+        map.addSource("buffer", {
+          type: "geojson",
+          data: {
+            type: "FeatureCollection",
+            features: []
+          }
         });
       });
       let popup = new mapboxgl.Popup();
@@ -75,39 +86,49 @@
         popup
           .setLngLat(feature.geometry.coordinates)
           .setHTML(
-             feature.properties.FULLADDR +
+            feature.properties.FULLADDR +
               "<br> " +
-              feature.properties['CONTRACTOR '] +
+              feature.properties["CONTRACTOR "] +
               "<br>" +
               feature.properties["ISSUED DATE"]
           )
           .addTo(map);
 
         map.getCanvas().style.cursor = features.length ? "pointer" : "";
-      })
-      map.on('click',function(e){
-        let Addresses = map.queryRenderedFeatures(e.point, {layers:['Ottawa']});
-        if (!Addresses.length){
+      });
+
+      map.on("click", function(e) {
+        let Addresses = map.queryRenderedFeatures(e.point, {
+          layers: ["Ottawa"]
+        });
+        let buffer = ''
+        if (!Addresses.length) {
           return;
         }
-        let clickedAddress = Addresses[0];
-        let buffer = turf.buffer(clickedAddress,2)
+        
+        if (!buffer) {
+          let clickedAddress = Addresses[0];
+          let buffer = turf.buffer(clickedAddress, 2);
+          let ptsWithin = turf.tag(Addresses,buffer);
+          console.log(ptsWithin)
 
-        map.addLayer({
-          id:'buffer',
-          type:'fill',
-          source:{
-            'type':'geojson',
-            'data':buffer
-          },
-          paint:{
-            'fill-opacity':0.3,
-            'fill-color': '#8e1eff',
-            'fill-outline-color':'#fffe1e'
-          }
-        })
-      })
-      ;
+          map.getSource("buffer").setData({
+            type: "FeatureCollection",
+            features: [buffer]
+          });
+
+          map.addLayer({
+            id: "buffer",
+            type: "fill",
+            source: "buffer",
+            paint: {
+              "fill-opacity": 0.3,
+              "fill-color": "#8e1eff",
+              "fill-outline-color": "#fffe1e"
+            }
+          });
+        }
+      });
       // map.addControl(new MapboxGeocoder({
       // accessToken: mapboxgl.accessToken,
       // mapboxgl: mapboxgl

@@ -27,9 +27,11 @@ Address_Permit['ISSUED DATE'] = Address_Permit['ISSUED DATE'].astype(str)
 
 geometry = [Point(xy) for xy in zip(Address_Permit['lon'],Address_Permit['lat'])]
 Address_Permit = gp.GeoDataFrame(Address_Permit,geometry=geometry)
-Address_Permit.crs = {'init' :'epsg:4326'}
+# Address_Permit.crs = {'init' :'epsg:4326'}
 Address_Permit.to_file('ottPermits.geojson',driver='GeoJSON',encoding="utf-8") 
 
-u = mb.Uploader(access_token=sk)
-url = u.stage(open('ottPermits.geojson', 'rb'))
-job = u.create(url, 'ottawaPermits').json()  
+#UNCOMMENT BELOW IF YOU WANT TO UPLOAD to MAPBOX OTHERWISE HOST ON GITHUB 
+
+# u = mb.Uploader(access_token=sk)
+# url = u.stage(open('ottPermits.geojson', 'rb'))
+# job = u.create(url, 'ottawaPermits').json()  
