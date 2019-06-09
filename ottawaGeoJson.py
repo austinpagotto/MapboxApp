@@ -28,7 +28,7 @@ Address_Permit['ISSUED DATE'] = Address_Permit['ISSUED DATE'].astype(str)
 geometry = [Point(xy) for xy in zip(Address_Permit['lon'],Address_Permit['lat'])]
 Address_Permit = gp.GeoDataFrame(Address_Permit,geometry=geometry)
 # Address_Permit.crs = {'init' :'epsg:4326'}
-Address_Permit.to_file('ottPermits.geojson',driver='GeoJSON',encoding="utf-8") 
+Address_Permit.head().to_file('ottPermits.geojson',driver='GeoJSON',encoding="utf-8") 
 
 #UNCOMMENT BELOW IF YOU WANT TO UPLOAD to MAPBOX OTHERWISE HOST ON GITHUB 
 
