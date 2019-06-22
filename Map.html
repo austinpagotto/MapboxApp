@@ -13,6 +13,7 @@
       rel="stylesheet"
     />
     <script src="https://cdn.jsdelivr.net/npm/@turf/turf@5/turf.min.js"></script>
+    <link rel="stylesheet" href="style.css" />
 
     <script
       src="https://code.jquery.com/jquery-3.4.1.js"
@@ -21,21 +22,89 @@
     ></script>
     <!-- <script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.2.0/mapbox-gl-geocoder.min.js'></script> -->
     <!-- <link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.2.0/mapbox-gl-geocoder.css' type='text/css' /> -->
-    <style>
-      body {
-        margin: 0;
-        padding: 0;
-      }
-      #map {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        width: 100%;
-      }
-    </style>
   </head>
   <body>
     <div id="map"></div>
+    <div id="sidebar">
+      <div class="container">
+        <div class="form-container flip">
+          <form class="search-form">
+            <h3 class="title">Hello.</h3>
+            <div class="form-group" id="longitude">
+              <input
+                class="form-input"
+                tooltip-class="longitude-tooltip"
+                placeholder="Longitude"
+                id="Longitude"
+              />
+              <span id="longitude-tool" class="tooltip longitude-tooltip"
+                >What's your Longitude?</span
+              >
+            </div>
+            <div class="form-group" id="latitude">
+              <input
+                class="form-input"
+                tooltip-class="latitude-tooltip"
+                placeholder="Latitude"
+                id="Latitude"
+              />
+              <span class="tooltip latitude-tooltip"
+                >What's your Latitude?</span
+              >
+            </div>
+            <div class="form-group" id="radius">
+              <input
+                class="form-input"
+                tooltip-class="radius-tooltip"
+                placeholder="Kilometers"
+                id="Radius"
+              />
+              <span class="tooltip radius-tooltip">Enter Search Radius</span>
+            </div>
+            <div class="form-group">
+              <button type="button" onclick="search()" class="search-button">
+                Search
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="comparables">
+        <div class="heading">
+          <h3 class="title">Comparables</h3>
+        </div>
+        <div id="listings" class="listings"></div>
+      </div>
+    </div>
+
+    <a href="#" id="refresh" value="Refresh" onClick="history.go()">
+      <svg
+        class="icon"
+        version="1.1"
+        id="Capa_1"
+        xmlns="http://www.w3.org/2000/svg"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        x="0px"
+        y="0px"
+        width="25px"
+        height="25px"
+        viewBox="0 0 322.447 322.447"
+        style="enable-background:new 0 0 322.447 322.447;"
+        xml:space="preserve"
+      >
+        <g>
+          <path
+            d="M321.832,230.327c-2.133-6.565-9.184-10.154-15.75-8.025l-16.254,5.281C299.785,206.991,305,184.347,305,161.224
+                  c0-84.089-68.41-152.5-152.5-152.5C68.411,8.724,0,77.135,0,161.224s68.411,152.5,152.5,152.5c6.903,0,12.5-5.597,12.5-12.5
+                  c0-6.902-5.597-12.5-12.5-12.5c-70.304,0-127.5-57.195-127.5-127.5c0-70.304,57.196-127.5,127.5-127.5
+                  c70.305,0,127.5,57.196,127.5,127.5c0,19.372-4.371,38.337-12.723,55.568l-5.553-17.096c-2.133-6.564-9.186-10.156-15.75-8.025
+                  c-6.566,2.134-10.16,9.186-8.027,15.751l14.74,45.368c1.715,5.283,6.615,8.642,11.885,8.642c1.279,0,2.582-0.198,3.865-0.614
+                  l45.369-14.738C320.371,243.946,323.965,236.895,321.832,230.327z"
+          />
+        </g>
+      </svg>
+    </a>
     <script>
       mapboxgl.accessToken =
         "pk.eyJ1IjoiYXBhZ290dG8iLCJhIjoiY2pwNzh0NjYxMW1ndDNxbnJ4Zmd0cnZ4cCJ9.-eIh1Yhfl7R1Q2rtX6lqAQ";
@@ -47,113 +116,178 @@
         minZoom: 10
       });
 
-      let url =
-        "https://raw.githubusercontent.com/austinpagotto/MapboxApp/master/ottPermits.geojson";
+      function search() {
+        mapboxgl.accessToken =
+          "pk.eyJ1IjoiYXBhZ290dG8iLCJhIjoiY2pwNzh0NjYxMW1ndDNxbnJ4Zmd0cnZ4cCJ9.-eIh1Yhfl7R1Q2rtX6lqAQ";
+        const map = new mapboxgl.Map({
+          container: "map",
+          style: "mapbox://styles/apagotto/cjw8e4f7y5ki61co3ntohays3",
+          center: [
+            document.getElementById("Longitude").value,
+            document.getElementById("Latitude").value
+          ],
+          zoom: 14,
+          minZoom: 13
+        });
 
-      $.get(url, function(data) {
-        //test if data is JSON
-        if (typeof data == "object") {
-          var fc = data;
-        } else {
-          var fc = JSON.parse(data);
-        }
-        console.log(fc);
+        let url =
+          "https://raw.githubusercontent.com/austinpagotto/MapboxApp/master/ottPermits.geojson";
 
-        map.on("load", function() {
-          map.addSource("Permits", {
+        $.get(url, function(data) {
+          //test if data is JSON
+          if (typeof data == "object") {
+            var fc = data;
+          } else {
+            var fc = JSON.parse(data);
+          }
+
+          let searchPoint = turf.point([
+            document.getElementById("Longitude").value,
+            document.getElementById("Latitude").value
+          ]);
+          let comparables = turf.featureCollection(
+            fc.features.filter(function(address) {
+              if (
+                turf.distance(address, searchPoint, { units: "kilometers" }) <
+                document.getElementById("Radius").value
+              )
+                return true;
+            })
+          );
+
+          map.addSource("Comparables", {
             type: "geojson",
-            data: fc
+            data: comparables
           });
           map.addLayer({
-            id: "Permits",
+            id: "Comparables",
             type: "circle",
-            source: "Permits",
+            source: "Comparables",
             layout: {
               visibility: "visible"
             },
             paint: {
-              "circle-radius": ["interpolate", ["linear"], ["zoom"], 2, 3],
+              "circle-radius": [
+                "interpolate",
+                ["linear"],
+                ["zoom"],
+                0,
+                1,
+                22,
+                6
+              ],
               "circle-color": "rgb(30, 144, 255)"
             }
           });
-        });
-        map.on("click", function(e) {
-          let mapLayer = map.getLayer("Buffer");
-          let withinMapLayer = map.getLayer("within");
-
-          let point = turf.point([e.lngLat.lng, e.lngLat.lat]);
-          let buffered = turf.buffer(point, 2);
-          var within = turf.featureCollection(
-            fc.features.filter(function(address) {
-              if (turf.distance(address, point) <= 2) return true;
-            })
-          );
-
-          if (mapLayer !== undefined) {
-            map.removeLayer("Buffer").removeSource("Buffer");
-          }
-
-          if (withinMapLayer !== undefined) {
-            map.removeLayer("within").removeSource("within");
-          }
-
-          map.addSource("Buffer", {
+          map.addSource("SearchPoint", {
             type: "geojson",
-            data: buffered
+            data: searchPoint
           });
           map.addLayer({
-            id: "Buffer",
-            type: "fill",
-            source: "Buffer",
-            paint: {
-              "fill-opacity": 0.3,
-              "fill-color": "#8e1eff",
-              "fill-outline-color": "#fffe1e"
-            }
-          });
-          map.addSource("within", {
-            type: "geojson",
-            data: within
-          });
-          map.addLayer({
-            id: "within",
+            id: "SearchPoint",
             type: "circle",
-            source: "within",
+            source: "SearchPoint",
             layout: {
               visibility: "visible"
             },
             paint: {
               // "circle-radius": ["interpolate", ["linear"], ["zoom"], 2, 3],
-              "circle-color": "rgb(30, 144, 255)"
+              "circle-color": "#fffe1e"
             }
           });
+
+          function flyTo(currentFeature) {
+            map.flyTo({
+              center: currentFeature.geometry.coordinates,
+              zoom: 17
+            });
+          }
+          for (i = 0; i < comparables.features.length; i++) {
+            let currentFeature = comparables.features[i];
+            let prop = currentFeature.properties;
+            prop.distance = turf.distance(
+              turf.point([prop.lon, prop.lat]),
+              searchPoint,
+              { units: "kilometers" }
+            );
+          }
+          comparables.features.sort(
+            (a, b) =>
+              parseFloat(a.properties.distance) -
+              parseFloat(b.properties.distance)
+          );
+          // console.log(comparables)
+          for (i = 0; i < comparables.features.length; i++) {
+            let listings = document.getElementById("listings");
+            let listing = listings.appendChild(document.createElement("div"));
+            listing.className = "item";
+            listing.id = "listing-" + i;
+
+            let link = listing.appendChild(document.createElement("a"));
+            link.href = "#";
+            // link.className = 'title'
+            link.dataPosition = i;
+            link.innerHTML = comparables.features[i].properties.FULLADDR;
+
+            let builder = listing.appendChild(document.createElement("div"));
+            builder.innerHTML =
+              "Builder: " + comparables.features[i].properties["CONTRACTOR "];
+
+            let value = listing.appendChild(document.createElement("div"));
+            value.innerHTML =
+              "Value: $" + comparables.features[i].properties["VALUE"];
+
+            let date = listing.appendChild(document.createElement("div"));
+            date.innerHTML =
+              "Date Issued: " +
+              comparables.features[i].properties["ISSUED DATE"];
+
+            let distance = listing.appendChild(document.createElement("div"));
+            distance.innerHTML =
+              "Distance(km): " +
+              parseFloat(
+                comparables.features[i].properties["distance"]
+              ).toFixed(2);
+
+            link.addEventListener("click", function(e) {
+              let clickedListing = comparables.features[this.dataPosition];
+              flyTo(clickedListing);
+              let activeItem = document.getElementsByClassName("active");
+
+              if (activeItem[0]) {
+                activeItem[0].classList.remove("active");
+              }
+              this.parentNode.classList.add("active");
+            });
+          }
         });
-      });
-      let popup = new mapboxgl.Popup();
 
-      map.on("mousemove", function(e) {
-        var features = map.queryRenderedFeatures(e.point, {
-          layers: ["Permits"]
+        let popup = new mapboxgl.Popup();
+
+        map.on("mousemove", function(e) {
+          var features = map.queryRenderedFeatures(e.point, {
+            layers: ["Comparables"]
+          });
+          if (!features.length) {
+            popup.remove();
+            return;
+          }
+          var feature = features[0];
+
+          popup
+            .setLngLat(feature.geometry.coordinates)
+            .setHTML(
+              feature.properties.FULLADDR +
+                "<br> " +
+                feature.properties["CONTRACTOR "] +
+                "<br>" +
+                feature.properties["ISSUED DATE"]
+            )
+            .addTo(map);
+
+          map.getCanvas().style.cursor = features.length ? "pointer" : "";
         });
-        if (!features.length) {
-          popup.remove();
-          return;
-        }
-        var feature = features[0];
-
-        popup
-          .setLngLat(feature.geometry.coordinates)
-          .setHTML(
-            feature.properties.FULLADDR +
-              "<br> " +
-              feature.properties["CONTRACTOR "] +
-              "<br>" +
-              feature.properties["ISSUED DATE"]
-          )
-          .addTo(map);
-
-        map.getCanvas().style.cursor = features.length ? "pointer" : "";
-      });
+      }
 
       // map.on("click", function(e) {
       //   let point = turf.point([e.lngLat.lng, e.lngLat.lat]);
