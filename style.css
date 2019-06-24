@@ -177,6 +177,24 @@ border-top:2px solid  #8e1eff;
   border-radius: 0;
 }
 
+#info {
+  display: block;
+  bottom: 20px;
+  right: 9px;
+  z-index: 2;
+  position: fixed;
+  margin: 0px auto;
+  width: 5%;
+  padding: 6px;
+  border: none;
+  border-radius: 3px;
+  font-size: 12px;
+  text-align: center;
+  color: rgb(255, 255, 255);
+  background: rgb(30, 144, 255);
+  font-family: 'Nunito', sans-serif;
+  }
+
   
   /* .loading {
       background: rgba(0, 90, 120, 0.7);

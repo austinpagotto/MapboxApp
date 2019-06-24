@@ -78,6 +78,9 @@
       </div>
     </div>
 
+    <div id="info">
+    </div>
+
     <a href="#" id="refresh" value="Refresh" onClick="history.go()">
       <svg
         class="icon"
@@ -127,8 +130,15 @@
             document.getElementById("Latitude").value
           ],
           zoom: 14,
-          minZoom: 13
+          minZoom: 13,
+          container: 'map'
         });
+
+        let oldList = document.getElementById('listings');
+        
+          while (oldList.hasChildNodes()) {
+            oldList.removeChild(oldList.firstChild);
+          }
 
         let url =
           "https://raw.githubusercontent.com/austinpagotto/MapboxApp/master/ottPermits.geojson";
@@ -287,6 +297,10 @@
 
           map.getCanvas().style.cursor = features.length ? "pointer" : "";
         });
+
+        map.on('click',function(e){
+          document.getElementById('info').innerHTML = parseFloat(e.lngLat.lng).toFixed(4) + '<br />' + parseFloat(e.lngLat.lat).toFixed(4);
+        })
       }
 
       // map.on("click", function(e) {
